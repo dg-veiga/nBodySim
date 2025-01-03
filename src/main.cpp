@@ -1,33 +1,33 @@
 #include <SFML/Graphics.hpp>
 #include <complex>
-// #include "resources/body.hpp"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 #define N_BODIES 15
-#define TRAIL_SIZE 5
-#define G 1000.0
+#define TRAIL_SIZE 50
+#define BODY_SIZE 10.0
+#define G 10000.0
 
 class Body
 {
 private:
-    float mass_ = 20.0;
+    float mass_ = 50.0;
     float state_[6];
     std::complex<float> vel_ = {static_cast<float>(rand() % 100), static_cast<float>(rand() % 100)};
     sf::CircleShape shape_;
     sf::Time dt_ = sf::milliseconds(16/10);
     sf::RenderWindow &window_;
-    std::vector<sf::CircleShape> trail_[TRAIL_SIZE];
+    std::vector<sf::CircleShape> trail_;
 
 public:
     float loc[2];
 
-    Body(sf::RenderWindow &window) : window_(window)
+    Body(sf::RenderWindow &window) : window_(window), trail_(TRAIL_SIZE)
     {
         loc[0] = static_cast<float>(rand() % WINDOW_WIDTH);
         loc[1] = static_cast<float>(rand() % WINDOW_HEIGHT);
 
-        shape_ = sf::CircleShape(10);
+        shape_ = sf::CircleShape(BODY_SIZE);
         shape_.setFillColor(sf::Color::Magenta);
     };
 
@@ -40,6 +40,10 @@ public:
 
         std::complex<float> acc = getGravityPullAcc(bodies);
         vel_ += acc * dt;
+
+        trail_.erase(trail_.begin());
+        trail_.push_back(shape_);
+        trail_.back().setPosition(loc[0], loc[1]);
         
         loc[0] += vel_.real() * dt;
         loc[1] += vel_.imag() * dt;
@@ -63,19 +67,19 @@ public:
         return total_acc;
     };
 
-    void drawTrail(){
+    void drawTrail(sf::RenderWindow &window){
         for (int i = 0; i < TRAIL_SIZE; ++i)
         {
-            trail_[i].emplace_back(shape_);
-            trail_[i].back().setFillColor(sf::Color::Blue);
-            trail_[i].back().setPosition(loc[0], loc[1]);
+            trail_[i].setFillColor(sf::Color::Color(255,0,0,255 - 255 * (TRAIL_SIZE-i) / TRAIL_SIZE));
+            trail_[i].setRadius(float(BODY_SIZE * i / TRAIL_SIZE));
+            window.draw(trail_[i]);
         }  
     };
 
     void render()
     {
+        this->drawTrail(this->window_);
         this->window_.draw(this->shape_);
-        // this->drawTrail();
     };
 };
 
